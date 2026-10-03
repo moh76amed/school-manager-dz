@@ -33,19 +33,24 @@ export function ClassesManager() {
   const [dialogVariant, setDialogVariant] = useState<'confirm' | 'info' | 'danger'>('confirm')
   const [dialogOnConfirm, setDialogOnConfirm] = useState<(() => void) | null>(null)
 
-  async function loadData() {
+    async function loadData() {
     setLoading(true)
       const { data: classesData, error: err1 } = await supabase
       .from('classes')
-      .select('id, name, level_id, student_count, male_count, female_count, levels(name)')
-      .order('id')
+      .select('id, name, level_id, student_count, male_count, female_count, levels(name, order_index)')
     const { data: levelsData, error: err2 } = await supabase
       .from('levels')
       .select('id, name, code')
       .order('order_index')
     if (err1) setError(err1.message)
     if (err2) setError(err2.message)
-    setClasses((classesData as any) || [])
+        const sorted = (classesData || []).sort((a: any, b: any) => {
+      const orderA = a.levels?.order_index ?? 999
+      const orderB = b.levels?.order_index ?? 999
+      if (orderA !== orderB) return orderA - orderB
+      return (a.name || '').localeCompare(b.name || '', 'ar')
+    })
+    setClasses(sorted as any)
     setLevels(levelsData || [])
     setLoading(false)
   }

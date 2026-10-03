@@ -35,18 +35,24 @@ export function TeachersSubjects() {
 
   async function loadData() {
     setLoading(true)
-    const { data: teachersData, error: e1 } = await supabase
+        const { data: teachersData, error: e1 } = await supabase
       .from('teachers')
       .select('id, first_name, last_name, email, phone, is_teacher, teacher_subjects(subjects(id, name))')
       .eq('is_teacher', true)
-      .order('last_name')
     const { data: subjectsData, error: e2 } = await supabase
       .from('subjects')
       .select('id, name')
       .order('id')
     if (e1) setError(e1.message)
     if (e2) setError(e2.message)
-    setTeachers((teachersData as any) || [])
+      const sortedTeachers = (teachersData || []).sort((a: any, b: any) => {
+      const lastNameA = a.last_name || ''
+      const lastNameB = b.last_name || ''
+      const cmp = lastNameA.localeCompare(lastNameB, 'ar')
+      if (cmp !== 0) return cmp
+      return (a.first_name || '').localeCompare(b.first_name || '', 'ar')
+    })
+    setTeachers(sortedTeachers as any)
     setSubjects(subjectsData || [])
     setLoading(false)
   }

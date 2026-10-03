@@ -41,9 +41,18 @@ export function TimetableView() {
 
   useEffect(() => {
     async function loadClasses() {
-      const { data } = await supabase.from('classes').select('*').order('id')
-      setClasses(data || [])
-      if (data && data.length > 0) setSelectedClass(data[0].id)
+      const { data } = await supabase
+        .from('classes')
+        .select('id, name, level_id, levels(name, order_index)')
+      // الترتيب حسب order_index للسنة، ثم حسب اسم القسم
+      const sorted = (data || []).sort((a: any, b: any) => {
+        const orderA = a.levels?.order_index ?? 999
+        const orderB = b.levels?.order_index ?? 999
+        if (orderA !== orderB) return orderA - orderB
+        return (a.name || '').localeCompare(b.name || '', 'ar')
+      })
+      setClasses(sorted)
+      if (sorted.length > 0) setSelectedClass(sorted[0].id)
     }
     loadClasses()
   }, [])
@@ -103,7 +112,9 @@ export function TimetableView() {
             style={{ padding: 6, fontSize: 16 }}
           >
             {classes.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id}>
+                {c.name} {c.levels?.name ? `— ${c.levels.name}` : ''}
+              </option>
             ))}
           </select>
         </label>
@@ -146,7 +157,7 @@ export function TimetableView() {
               {DAYS.map((_, dayIdx) => {
                 if (isCoveredByPrevious(dayIdx, slot.index)) return null
 
-                                const entry = getEntryAt(dayIdx, slot.index)
+                const entry = getEntryAt(dayIdx, slot.index)
                 if (entry) {
                   return (
                     <td
@@ -169,7 +180,7 @@ export function TimetableView() {
                     </td>
                   )
                 }
-                   return (
+                return (
                   <td
                     key={dayIdx}
                     style={{ ...cellStyle, cursor: 'pointer' }}
@@ -183,7 +194,7 @@ export function TimetableView() {
         </tbody>
       </table>
 
-            {showForm && selectedClass && (
+      {showForm && selectedClass && (
         <AddEntryForm
           classId={selectedClass}
           initialDay={formDay}
@@ -195,7 +206,7 @@ export function TimetableView() {
           onCancel={() => setShowForm(false)}
         />
       )}
-      
+
       {editingEntry && (
         <EditEntryForm
           entry={editingEntry}
