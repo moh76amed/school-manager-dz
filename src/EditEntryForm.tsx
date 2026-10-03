@@ -10,7 +10,17 @@ const TIME_SLOTS = Array.from({ length: 36 }, (_, i) => {
     const min = (m % 60).toString().padStart(2, '0')
     return `${h}:${min}`
   }
-  return { index: i + 1, label: `${fmt(startMinutes)} - ${fmt(startMinutes + 15)}` }
+  return { index: i + 1, label: fmt(startMinutes) }
+})
+
+const END_SLOTS = Array.from({ length: 36 }, (_, i) => {
+  const endMinutes = 8 * 60 + (i + 1) * 15
+  const fmt = (m: number) => {
+    const h = Math.floor(m / 60).toString().padStart(2, '0')
+    const min = (m % 60).toString().padStart(2, '0')
+    return `${h}:${min}`
+  }
+  return { index: i + 1, label: fmt(endMinutes) }
 })
 
 type ExistingEntry = {
@@ -38,7 +48,7 @@ export function EditEntryForm({ entry, onSaved, onCancel, onDeleted }: Props) {
   const [teacherId, setTeacherId] = useState<string>(entry.teacher_id)
   const [day, setDay] = useState<number>(entry.day_of_week)
   const [startSlot, setStartSlot] = useState<number>(entry.start_slot)
-  const [duration, setDuration] = useState<number>(entry.duration_slots)
+  const [endSlot, setEndSlot] = useState<number>(entry.start_slot + entry.duration_slots - 1)
   const [room, setRoom] = useState<string>(entry.room || '')
   const [error, setError] = useState<string>('')
   const [saving, setSaving] = useState<boolean>(false)
@@ -65,6 +75,10 @@ export function EditEntryForm({ entry, onSaved, onCancel, onDeleted }: Props) {
       setError('يرجى اختيار المادة والأستاذ')
       return
     }
+    if (endSlot < startSlot) {
+      setError('وقت النهاية يجب أن يكون بعد وقت البداية')
+      return
+    }
     setSaving(true)
     const { error: updateError } = await supabase
       .from('timetable_entries')
@@ -73,7 +87,7 @@ export function EditEntryForm({ entry, onSaved, onCancel, onDeleted }: Props) {
         subject_id: subjectId,
         day_of_week: day,
         start_slot: startSlot,
-        duration_slots: duration,
+        duration_slots: endSlot - startSlot + 1,
         room: room || null
       })
       .eq('id', entry.id)
@@ -131,17 +145,20 @@ export function EditEntryForm({ entry, onSaved, onCancel, onDeleted }: Props) {
         <label style={labelStyle}>
           وقت البداية
           <select value={startSlot} onChange={(e) => setStartSlot(Number(e.target.value))} style={inputStyle}>
-            {TIME_SLOTS.map((s) => <option key={s.index} value={s.index}>{s.label}</option>)}
+            {TIME_SLOTS.map((s) => (
+              <option key={s.index} value={s.index}>{s.label}</option>
+            ))}
           </select>
         </label>
 
         <label style={labelStyle}>
-          المدة (بالوحدات 15 دقيقة)
-          <select value={duration} onChange={(e) => setDuration(Number(e.target.value))} style={inputStyle}>
-            <option value={1}>وحدة واحدة (15 دقيقة)</option>
-            <option value={2}>وحدتان (30 دقيقة)</option>
-            <option value={3}>ثلاث وحدات (45 دقيقة)</option>
-            <option value={4}>أربع وحدات (60 دقيقة)</option>
+          وقت النهاية
+          <select value={endSlot} onChange={(e) => setEndSlot(Number(e.target.value))} style={inputStyle}>
+            {END_SLOTS
+              .filter((s) => s.index >= startSlot)
+              .map((s) => (
+                <option key={s.index} value={s.index}>{s.label}</option>
+              ))}
           </select>
         </label>
 

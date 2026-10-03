@@ -10,7 +10,18 @@ const TIME_SLOTS = Array.from({ length: 36 }, (_, i) => {
     const min = (m % 60).toString().padStart(2, '0')
     return `${h}:${min}`
   }
-  return { index: i + 1, label: `${fmt(startMinutes)} - ${fmt(startMinutes + 15)}` }
+  return { index: i + 1, label: fmt(startMinutes) }
+})
+
+// للاستعمال في "وقت النهاية"
+const END_SLOTS = Array.from({ length: 36 }, (_, i) => {
+  const endMinutes = 8 * 60 + (i + 1) * 15
+  const fmt = (m: number) => {
+    const h = Math.floor(m / 60).toString().padStart(2, '0')
+    const min = (m % 60).toString().padStart(2, '0')
+    return `${h}:${min}`
+  }
+  return { index: i + 1, label: fmt(endMinutes) }
 })
 
 type Props = {
@@ -29,7 +40,7 @@ export function AddEntryForm({ classId, onSaved, onCancel, initialDay = 0, initi
   const [teacherId, setTeacherId] = useState<string>('')
   const [day, setDay] = useState<number>(initialDay)
   const [startSlot, setStartSlot] = useState<number>(initialStartSlot)
-  const [duration, setDuration] = useState<number>(3)
+  const [endSlot, setEndSlot] = useState<number>(3)
   const [room, setRoom] = useState<string>('')
   const [error, setError] = useState<string>('')
   const [saving, setSaving] = useState<boolean>(false)
@@ -73,13 +84,13 @@ export function AddEntryForm({ classId, onSaved, onCancel, initialDay = 0, initi
       return
     }
     setSaving(true)
-    const { error: insertError } = await supabase.from('timetable_entries').insert({
+      const { error: insertError } = await supabase.from('timetable_entries').insert({
       teacher_id: teacherId,
       class_id: classId,
       subject_id: subjectId,
       day_of_week: day,
       start_slot: startSlot,
-      duration_slots: duration,
+      duration_slots: endSlot - startSlot + 1,
       room: room || null
     })
     setSaving(false)
@@ -132,20 +143,23 @@ export function AddEntryForm({ classId, onSaved, onCancel, initialDay = 0, initi
           </select>
         </label>
 
-        <label style={labelStyle}>
+                <label style={labelStyle}>
           وقت البداية
           <select value={startSlot} onChange={(e) => setStartSlot(Number(e.target.value))} style={inputStyle}>
-            {TIME_SLOTS.map((s) => <option key={s.index} value={s.index}>{s.label}</option>)}
+            {TIME_SLOTS.map((s) => (
+              <option key={s.index} value={s.index}>{s.label}</option>
+            ))}
           </select>
         </label>
 
-        <label style={labelStyle}>
-          المدة (بالوحدات 15 دقيقة)
-          <select value={duration} onChange={(e) => setDuration(Number(e.target.value))} style={inputStyle}>
-            <option value={2}>وحدتان (30 دقيقة)</option>
-            <option value={3}>ثلاث وحدات (45 دقيقة)</option>
-            <option value={4}>أربع وحدات (60 دقيقة)</option>
-            <option value={1}>وحدة واحدة (15 دقيقة)</option>
+                <label style={labelStyle}>
+          وقت النهاية
+          <select value={endSlot} onChange={(e) => setEndSlot(Number(e.target.value))} style={inputStyle}>
+            {END_SLOTS
+              .filter((s) => s.index >= startSlot)
+              .map((s) => (
+                <option key={s.index} value={s.index}>{s.label}</option>
+              ))}
           </select>
         </label>
 

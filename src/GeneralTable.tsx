@@ -3,6 +3,14 @@ import { supabase } from './supabaseClient'
 
 const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس']
 
+const MORNING_RANGES: { [day: number]: [number, number] } = {
+  0: [1, 16],
+  1: [1, 16],
+  2: [1, 16],
+  3: [1, 16],
+  4: [1, 16]
+}
+
 type Teacher = {
   id: string
   first_name: string
@@ -22,13 +30,13 @@ type Entry = {
 export function GeneralTable() {
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [entries, setEntries] = useState<Entry[]>([])
-  const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState<any>(null)
   const [classes, setClasses] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
-            const { data: t } = await supabase
+      const { data: t } = await supabase
         .from('teachers')
         .select('id, first_name, last_name')
         .eq('is_teacher', true)
@@ -53,14 +61,12 @@ export function GeneralTable() {
     load()
   }, [])
 
-  // حصص أستاذ في يوم معيّن
   function getEntriesFor(teacherId: string, day: number) {
     return entries
       .filter(e => e.teacher_id === teacherId && e.day_of_week === day)
       .sort((a, b) => a.start_slot - b.start_slot)
   }
 
-  // ترميز القسم: "1-1" (السنة-القسم)
   function getClassCode(entry: Entry) {
     if (!entry.classes) return '?'
     const levelName = entry.classes.levels?.name || ''
@@ -80,7 +86,7 @@ export function GeneralTable() {
   if (loading) return <p style={{ padding: 20 }}>جاري التحميل...</p>
 
   return (
-        <div style={{ padding: 20, direction: 'rtl', fontFamily: 'Arial', background: '#f5f5f5' }}>
+    <div style={{ padding: 20, direction: 'rtl', fontFamily: 'Arial', background: '#f5f5f5' }}>
       {/* الرأس الرسمي */}
       <div style={{ background: 'white', padding: 15, marginBottom: 15, border: '1px solid #ddd' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -88,11 +94,11 @@ export function GeneralTable() {
             <div style={{ fontWeight: 'bold' }}>وزارة التربية الوطنية</div>
             <div>{settings?.direction || 'مديرية التربية لولاية ...'}</div>
           </div>
-                    <div style={{ fontSize: 11, lineHeight: 1.6, flex: 1, textAlign: 'center' }}>
+          <div style={{ fontSize: 11, lineHeight: 1.6, flex: 1, textAlign: 'center' }}>
             <div style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 4 }}>
               الجمهورية الجزائرية الديمقراطية الشعبية
             </div>
-                <div>
+            <div>
               المدير: <strong>{settings?.director_name || '...'}</strong>
               {'  |  '}
               البلدية: <strong>{settings?.commune || '...'}</strong>
@@ -104,7 +110,6 @@ export function GeneralTable() {
           </div>
         </div>
 
-          {/* الإحصائيات */}
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
           <thead>
             <tr>
@@ -119,15 +124,9 @@ export function GeneralTable() {
             </tr>
             <tr>
               <th style={statHeaderStyle}>التلاميذ</th>
-              <th style={statValueStyle}>
-                ذكور: {classes.reduce((sum, c) => sum + (c.male_count || 0), 0)}
-              </th>
-              <th style={statValueStyle}>
-                إناث: {classes.reduce((sum, c) => sum + (c.female_count || 0), 0)}
-              </th>
-              <th style={statValueStyle}>
-                المجموع: {classes.reduce((sum, c) => sum + (c.student_count || 0), 0)}
-              </th>
+              <th style={statValueStyle}>ذكور: {classes.reduce((s, c) => s + (c.male_count || 0), 0)}</th>
+              <th style={statValueStyle}>إناث: {classes.reduce((s, c) => s + (c.female_count || 0), 0)}</th>
+              <th style={statValueStyle}>المجموع: {classes.reduce((s, c) => s + (c.student_count || 0), 0)}</th>
               <th style={statHeaderStyle}>الأقسام</th>
               <th style={statValueStyle} colSpan={3}>{classes.length} قسم</th>
             </tr>
@@ -154,25 +153,28 @@ export function GeneralTable() {
               </td>
               {DAYS.map((_, dayIdx) => {
                 const dayEntries = getEntriesFor(teacher.id, dayIdx)
+                const morningRange = MORNING_RANGES[dayIdx] || [1, 16]
+                const morningEntries = dayEntries.filter(
+                  e => e.start_slot >= morningRange[0] && e.start_slot <= morningRange[1]
+                )
+                const eveningEntries = dayEntries.filter(
+                  e => e.start_slot > morningRange[1]
+                )
                 return (
                   <td key={dayIdx} style={cellStyle}>
                     {dayEntries.length === 0 ? (
                       <span style={{ color: '#ccc' }}>—</span>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        {dayEntries.map(entry => (
-                          <div
-                            key={entry.id}
-                            style={{
-                              background: entry.subjects?.color || '#ddd',
-                              color: 'white',
-                              padding: '3px 5px',
-                              borderRadius: 3,
-                              fontSize: 11,
-                              fontWeight: 'bold',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
+                        <div style={morningLabelStyle}>صباح</div>
+                        {morningEntries.map(entry => (
+                          <div key={entry.id} style={{ ...entryBoxStyle, background: entry.subjects?.color || '#ddd' }}>
+                            {getClassCode(entry)} {entry.subjects?.code || ''}
+                          </div>
+                        ))}
+                        <div style={eveningLabelStyle}>مساء</div>
+                        {eveningEntries.map(entry => (
+                          <div key={entry.id} style={{ ...entryBoxStyle, background: entry.subjects?.color || '#ddd' }}>
                             {getClassCode(entry)} {entry.subjects?.code || ''}
                           </div>
                         ))}
@@ -214,6 +216,35 @@ const cellStyle: React.CSSProperties = {
   verticalAlign: 'top',
   minWidth: 100
 }
+
+const morningLabelStyle: React.CSSProperties = {
+  background: '#fef3c7',
+  padding: 2,
+  borderRadius: 3,
+  fontSize: 9,
+  fontWeight: 'bold',
+  color: '#92400e'
+}
+
+const eveningLabelStyle: React.CSSProperties = {
+  background: '#dbeafe',
+  padding: 2,
+  borderRadius: 3,
+  fontSize: 9,
+  fontWeight: 'bold',
+  color: '#1e40af',
+  marginTop: 3
+}
+
+const entryBoxStyle: React.CSSProperties = {
+  color: 'white',
+  padding: '3px 5px',
+  borderRadius: 3,
+  fontSize: 11,
+  fontWeight: 'bold',
+  whiteSpace: 'nowrap'
+}
+
 const statHeaderStyle: React.CSSProperties = {
   border: '1px solid #999',
   padding: 4,
