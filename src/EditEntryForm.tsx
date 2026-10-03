@@ -53,6 +53,7 @@ export function EditEntryForm({ entry, onSaved, onCancel, onDeleted }: Props) {
   const [error, setError] = useState<string>('')
   const [saving, setSaving] = useState<boolean>(false)
   const [confirmDelete, setConfirmDelete] = useState<boolean>(false)
+  const [blockedSlots, setBlockedSlots] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     async function load() {
@@ -67,6 +68,41 @@ export function EditEntryForm({ entry, onSaved, onCancel, onDeleted }: Props) {
     }
     load()
   }, [])
+
+  
+  // جلب الحصص المسدودة (الأستاذ + القسم) — مع استثناء الحصة الحالية
+  useEffect(() => {
+    async function loadBlocked() {
+      if (!teacherId || !entry.class_id) return
+
+      const blocked = new Set<number>()
+
+      // حصص الأستاذ في هذا اليوم
+      const { data: teacherEntries } = await supabase
+        .from('timetable_entries')
+        .select('id, start_slot, duration_slots')
+        .eq('teacher_id', teacherId)
+        .eq('day_of_week', day)
+
+      // حصص القسم في هذا اليوم
+      const { data: classEntries } = await supabase
+        .from('timetable_entries')
+        .select('id, start_slot, duration_slots')
+        .eq('class_id', entry.class_id)
+        .eq('day_of_week', day)
+
+      ;[...(teacherEntries || []), ...(classEntries || [])]
+        .filter((e: any) => e.id !== entry.id)  // ← استثناء الحصة الحالية
+        .forEach((e: any) => {
+          for (let i = 0; i < e.duration_slots; i++) {
+            blocked.add(e.start_slot + i)
+          }
+        })
+
+      setBlockedSlots(blocked)
+    }
+    loadBlocked()
+  }, [teacherId, day, entry.id, entry.class_id])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -142,20 +178,28 @@ export function EditEntryForm({ entry, onSaved, onCancel, onDeleted }: Props) {
           </select>
         </label>
 
-        <label style={labelStyle}>
+                <label style={labelStyle}>
           وقت البداية
           <select value={startSlot} onChange={(e) => setStartSlot(Number(e.target.value))} style={inputStyle}>
-            {TIME_SLOTS.map((s) => (
-              <option key={s.index} value={s.index}>{s.label}</option>
-            ))}
+            {TIME_SLOTS
+              .filter((s) => !blockedSlots.has(s.index))
+              .map((s) => (
+                <option key={s.index} value={s.index}>{s.label}</option>
+              ))}
           </select>
         </label>
 
-        <label style={labelStyle}>
+                <label style={labelStyle}>
           وقت النهاية
           <select value={endSlot} onChange={(e) => setEndSlot(Number(e.target.value))} style={inputStyle}>
             {END_SLOTS
               .filter((s) => s.index >= startSlot)
+              .filter((s) => {
+                for (let i = startSlot; i <= s.index; i++) {
+                  if (blockedSlots.has(i)) return false
+                }
+                return true
+              })
               .map((s) => (
                 <option key={s.index} value={s.index}>{s.label}</option>
               ))}
