@@ -138,17 +138,25 @@ export function TeacherPrint() {
       <div className="print-area" style={pageStyle}>
 
         {/* الرأس */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
-          <div style={{ textAlign: 'right', fontSize: 11, lineHeight: 1.6, flex: 1 }}>
-            <div style={{ fontWeight: 'bold' }}>وزارة التربية الوطنية</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15, fontSize: 11, lineHeight: 1.7 }}>
+          {/* يمين */}
+          <div style={{ flex: 1, textAlign: 'right' }}>
             <div>{settings?.direction || 'مديرية التربية لولاية ...'}</div>
+            <div>{settings?.inspectorate || 'المفتشية'}</div>
           </div>
-          <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 'bold', flex: 1, paddingTop: 4 }}>
-            الجمهورية الجزائرية الديمقراطية الشعبية
+
+          {/* وسط */}
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{ fontWeight: 'bold', fontSize: 12 }}>
+              الجمهورية الجزائرية الديمقراطية الشعبية
+            </div>
+            <div>وزارة التربية الوطنية</div>
           </div>
-          <div style={{ textAlign: 'left', fontSize: 11, lineHeight: 1.6, flex: 1 }}>
+
+          {/* يسار */}
+          <div style={{ flex: 1, textAlign: 'left' }}>
+            <div>السنة الدراسية: <strong>{settings?.academic_year || '...'}</strong></div>
             <div style={{ fontWeight: 'bold' }}>{settings?.school_name || 'اسم المدرسة'}</div>
-            <div>السنة الدراسية: {settings?.academic_year || '...'}</div>
           </div>
         </div>
 
@@ -252,7 +260,7 @@ export function TeacherPrint() {
 
         {/* التذييل */}
         <div style={{ marginTop: 15, fontSize: 11, display: 'flex', justifyContent: 'space-between' }}>
-          <div>الأستاذ: {selectedTeacherObj?.first_name || ''} {selectedTeacherObj?.last_name || ''}</div>
+          <div>الأستاذ(ة): {selectedTeacherObj?.first_name || ''} {selectedTeacherObj?.last_name || ''}</div>
           <div>مدير المؤسسة: {settings?.director_name || '...'}</div>
         </div>
       </div>

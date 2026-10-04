@@ -10,6 +10,7 @@ type Entry = {
   duration_slots: number
   room: string | null
   is_break: boolean | null
+  subject_id: number
   subjects: { name: string; color: string } | null
   teachers: { first_name: string; last_name: string } | null
 }
@@ -63,7 +64,7 @@ export function PrintTimetableView() {
     async function loadEntries() {
       const { data } = await supabase
         .from('timetable_entries')
-        .select('id, day_of_week, start_slot, duration_slots, room, is_break, subjects(name, color), teachers(first_name, last_name)')
+        .select('id, day_of_week, start_slot, duration_slots, room, is_break, subject_id, subjects(name, color), teachers(first_name, last_name)')
         .eq('class_id', selectedClass)
       setEntries((data as any) || [])
     }
@@ -96,6 +97,15 @@ export function PrintTimetableView() {
   )
 
   const selectedClassObj = classes.find(c => c.id === selectedClass)
+    // استخراج اسم أستاذ اللغة العربية للقسم المختار
+  const arabicTeacherName = (() => {
+    // البحث عن حصة اللغة العربية (subject code = ARB) في القسم
+    const arbSubjectId = entries.find(e => e.subjects?.name === 'اللغة العربية')?.subject_id
+    if (!arbSubjectId) return null
+    const arbEntry = entries.find(e => e.subject_id === arbSubjectId)
+    if (!arbEntry) return null
+    return `${arbEntry.teachers?.first_name || ''} ${arbEntry.teachers?.last_name || ''}`.trim()
+  })()
   const useHorizontalTime = visibleSlots.length < 8
 
   const dynamicFontSize =
@@ -145,17 +155,25 @@ export function PrintTimetableView() {
       {/* منطقة الطباعة */}
       <div className="print-area" style={pageStyle}>
         {/* الرأس */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
-          <div style={{ textAlign: 'right', fontSize: 11, lineHeight: 1.6, flex: 1 }}>
-            <div style={{ fontWeight: 'bold' }}>وزارة التربية الوطنية</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15, fontSize: 11, lineHeight: 1.7 }}>
+          {/* يمين */}
+          <div style={{ flex: 1, textAlign: 'right' }}>
             <div>{settings?.direction || 'مديرية التربية لولاية ...'}</div>
+            <div>{settings?.inspectorate || 'المفتشية'}</div>
           </div>
-          <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 'bold', flex: 1, paddingTop: 4 }}>
-            الجمهورية الجزائرية الديمقراطية الشعبية
+
+          {/* وسط */}
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <div style={{ fontWeight: 'bold', fontSize: 12 }}>
+              الجمهورية الجزائرية الديمقراطية الشعبية
+            </div>
+            <div>وزارة التربية الوطنية</div>
           </div>
-          <div style={{ textAlign: 'left', fontSize: 11, lineHeight: 1.6, flex: 1 }}>
+
+          {/* يسار */}
+          <div style={{ flex: 1, textAlign: 'left' }}>
+            <div>السنة الدراسية: <strong>{settings?.academic_year || '...'}</strong></div>
             <div style={{ fontWeight: 'bold' }}>{settings?.school_name || 'اسم المدرسة'}</div>
-            <div>السنة الدراسية: {settings?.academic_year || '...'}</div>
           </div>
         </div>
 
@@ -253,10 +271,15 @@ export function PrintTimetableView() {
         </table>
 
         {/* التذييل */}
-        <div style={{ marginTop: 15, fontSize: 11, display: 'flex', justifyContent: 'space-between' }}>
-          <div>مدير المؤسسة: {settings?.director_name || '...'}</div>
-          <div>المفتشية: {settings?.inspectorate || '...'}</div>
+            <div style={{ marginTop: 15, fontSize: 11, display: 'flex', justifyContent: 'space-between' }}>
+          <div>
+            الأستاذ(ة): {arabicTeacherName || '...'}
+          </div>
+          <div>
+            مدير المؤسسة: {settings?.director_name || '...'}
+          </div>
         </div>
+
       </div>
     </div>
   )
