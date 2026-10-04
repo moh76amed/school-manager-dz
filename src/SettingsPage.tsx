@@ -25,14 +25,16 @@ type Settings = {
   academic_year: string | null
   inspectorate: string | null
   director_name: string | null
-  stone_rooms: number | null
-  wooden_rooms: number | null
-  other_rooms: number | null
   used_rooms: number | null
-  empty_rooms: number | null
-  teaching_positions: number | null
-  other_positions: number | null
-  vacant_positions: number | null
+  unused_rooms: number | null
+  position_director: number | null
+  position_nazir: number | null
+  position_support: number | null
+  position_other: number | null
+  position_arabic_teacher: number | null
+  position_french_teacher: number | null
+  position_english_teacher: number | null
+  position_pe_teacher: number | null
 }
 
 export function SettingsPage() {
@@ -81,14 +83,16 @@ export function SettingsPage() {
         academic_year: settings.academic_year,
         inspectorate: settings.inspectorate,
         director_name: settings.director_name,
-        stone_rooms: settings.stone_rooms,
-        wooden_rooms: settings.wooden_rooms,
-        other_rooms: settings.other_rooms,
         used_rooms: settings.used_rooms,
-        empty_rooms: settings.empty_rooms,
-        teaching_positions: settings.teaching_positions,
-        other_positions: settings.other_positions,
-        vacant_positions: settings.vacant_positions
+        unused_rooms: settings.unused_rooms,
+        position_director: settings.position_director,
+        position_nazir: settings.position_nazir,
+        position_support: settings.position_support,
+        position_other: settings.position_other,
+        position_arabic_teacher: settings.position_arabic_teacher,
+        position_french_teacher: settings.position_french_teacher,
+        position_english_teacher: settings.position_english_teacher,
+        position_pe_teacher: settings.position_pe_teacher
       })
       .eq('id', 1)
 
@@ -110,7 +114,7 @@ export function SettingsPage() {
       <h1>إعدادات المؤسسة</h1>
 
       <form onSubmit={handleSubmit}>
-        {/* 1. المرحلة التعليمية */}
+        {/* المرحلة التعليمية */}
         <label style={labelStyle}>
           المرحلة التعليمية *
           <select
@@ -124,7 +128,7 @@ export function SettingsPage() {
           </select>
         </label>
 
-        {/* 2. الولاية */}
+        {/* الولاية */}
         <label style={labelStyle}>
           الولاية *
           <select
@@ -139,7 +143,7 @@ export function SettingsPage() {
           </select>
         </label>
 
-        {/* 3. مديرية التربية (تلقائي) */}
+        {/* مديرية التربية (تلقائي) */}
         <label style={labelStyle}>
           مديرية التربية (تلقائي)
           <input
@@ -150,7 +154,7 @@ export function SettingsPage() {
           />
         </label>
 
-        {/* 4. المفتشية */}
+        {/* المفتشية */}
         <label style={labelStyle}>
           المفتشية
           <input
@@ -161,7 +165,7 @@ export function SettingsPage() {
           />
         </label>
 
-        {/* 5. السنة الدراسية */}
+        {/* السنة الدراسية */}
         <label style={labelStyle}>
           السنة الدراسية
           <input
@@ -173,7 +177,7 @@ export function SettingsPage() {
           />
         </label>
 
-        {/* 6. الدائرة */}
+        {/* الدائرة */}
         <label style={labelStyle}>
           الدائرة
           <input
@@ -184,7 +188,7 @@ export function SettingsPage() {
           />
         </label>
 
-        {/* 7. البلدية */}
+        {/* البلدية */}
         <label style={labelStyle}>
           البلدية
           <input
@@ -195,7 +199,7 @@ export function SettingsPage() {
           />
         </label>
 
-        {/* 8. اسم المدرسة */}
+        {/* اسم المدرسة */}
         <label style={labelStyle}>
           اسم المدرسة *
           <input
@@ -206,7 +210,7 @@ export function SettingsPage() {
           />
         </label>
 
-        {/* 9. اسم المدير */}
+        {/* اسم المدير */}
         <label style={labelStyle}>
           اسم المدير
           <input
@@ -220,7 +224,6 @@ export function SettingsPage() {
         <hr style={{ margin: '20px 0', border: '1px solid #eee' }} />
         <h3 style={{ marginBottom: 15 }}>الحجرات</h3>
 
-        {/* 10. الحجرات المستعملة */}
         <label style={labelStyle}>
           الحجرات المستعملة
           <input
@@ -232,56 +235,112 @@ export function SettingsPage() {
           />
         </label>
 
-        {/* 11. الحجرات الفارغة */}
         <label style={labelStyle}>
-          الحجرات الفارغة
+          الحجرات غير المستعملة
           <input
             type="number"
-            value={settings.empty_rooms ?? 0}
-            onChange={(e) => updateField('empty_rooms', Number(e.target.value))}
+            value={settings.unused_rooms ?? 0}
+            onChange={(e) => updateField('unused_rooms', Number(e.target.value))}
             style={inputStyle}
             min={0}
           />
         </label>
 
-         <hr style={{ margin: '20px 0', border: '1px solid #eee' }} />
-        <h3 style={{ marginBottom: 15 }}>المناصب</h3>
+        <hr style={{ margin: '20px 0', border: '1px solid #eee' }} />
+        <h3 style={{ marginBottom: 15 }}>المناصب المفتوحة</h3>
 
-        {/* 15. مناصب التدريس */}
-        <label style={labelStyle}>
-          مناصب التدريس
-          <input
-            type="number"
-            value={settings.teaching_positions ?? 0}
-            onChange={(e) => updateField('teaching_positions', Number(e.target.value))}
-            style={inputStyle}
-            min={0}
-          />
-        </label>
-
-        {/* 16. مناصب أخرى */}
-        <label style={labelStyle}>
-          مناصب أخرى
-          <input
-            type="number"
-            value={settings.other_positions ?? 0}
-            onChange={(e) => updateField('other_positions', Number(e.target.value))}
-            style={inputStyle}
-            min={0}
-          />
-        </label>
-
-        {/* 17. مناصب شاغرة */}
-        <label style={labelStyle}>
-          مناصب شاغرة
-          <input
-            type="number"
-            value={settings.vacant_positions ?? 0}
-            onChange={(e) => updateField('vacant_positions', Number(e.target.value))}
-            style={inputStyle}
-            min={0}
-          />
-        </label>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+          <tbody>
+            <tr>
+              <td style={posLabelStyle}>المدير</td>
+              <td style={posInputStyle}>
+                <input
+                  type="number"
+                  value={settings.position_director ?? 0}
+                  onChange={(e) => updateField('position_director', Number(e.target.value))}
+                  style={smallInputStyle}
+                  min={0}
+                />
+              </td>
+              <td style={posLabelStyle}>أستاذ العربية</td>
+              <td style={posInputStyle}>
+                <input
+                  type="number"
+                  value={settings.position_arabic_teacher ?? 0}
+                  onChange={(e) => updateField('position_arabic_teacher', Number(e.target.value))}
+                  style={smallInputStyle}
+                  min={0}
+                />
+              </td>
+            </tr>
+            <tr>
+              <td style={posLabelStyle}>الناظر</td>
+              <td style={posInputStyle}>
+                <input
+                  type="number"
+                  value={settings.position_nazir ?? 0}
+                  onChange={(e) => updateField('position_nazir', Number(e.target.value))}
+                  style={smallInputStyle}
+                  min={0}
+                />
+              </td>
+              <td style={posLabelStyle}>أستاذ الفرنسية</td>
+              <td style={posInputStyle}>
+                <input
+                  type="number"
+                  value={settings.position_french_teacher ?? 0}
+                  onChange={(e) => updateField('position_french_teacher', Number(e.target.value))}
+                  style={smallInputStyle}
+                  min={0}
+                />
+              </td>
+            </tr>
+            <tr>
+              <td style={posLabelStyle}>مربي متخصص في الدعم التربوي</td>
+              <td style={posInputStyle}>
+                <input
+                  type="number"
+                  value={settings.position_support ?? 0}
+                  onChange={(e) => updateField('position_support', Number(e.target.value))}
+                  style={smallInputStyle}
+                  min={0}
+                />
+              </td>
+              <td style={posLabelStyle}>أستاذ الإنجليزية</td>
+              <td style={posInputStyle}>
+                <input
+                  type="number"
+                  value={settings.position_english_teacher ?? 0}
+                  onChange={(e) => updateField('position_english_teacher', Number(e.target.value))}
+                  style={smallInputStyle}
+                  min={0}
+                />
+              </td>
+            </tr>
+            <tr>
+              <td style={posLabelStyle}>منصب آخر</td>
+              <td style={posInputStyle}>
+                <input
+                  type="number"
+                  value={settings.position_other ?? 0}
+                  onChange={(e) => updateField('position_other', Number(e.target.value))}
+                  style={smallInputStyle}
+                  min={0}
+                />
+              </td>
+              <td style={posLabelStyle}>أستاذ التربية البدنية</td>
+              <td style={posInputStyle}>
+                <input
+                  type="number"
+                  value={settings.position_pe_teacher ?? 0}
+                  onChange={(e) => updateField('position_pe_teacher', Number(e.target.value))}
+                  style={smallInputStyle}
+                  min={0}
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
         {error && <div style={errorStyle}>{error}</div>}
         {success && <div style={successStyle}>✅ تم حفظ الإعدادات بنجاح</div>}
@@ -311,6 +370,28 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
   fontFamily: 'inherit'
 }
+const smallInputStyle: React.CSSProperties = {
+  width: 70,
+  padding: 6,
+  fontSize: 14,
+  border: '1px solid #ccc',
+  borderRadius: 4,
+  textAlign: 'center'
+}
+const posLabelStyle: React.CSSProperties = {
+  padding: 8,
+  fontWeight: 'bold',
+  fontSize: 13,
+  background: '#f9f9f9',
+  border: '1px solid #ddd',
+  textAlign: 'right'
+}
+const posInputStyle: React.CSSProperties = {
+  padding: 8,
+  textAlign: 'center',
+  background: '#f9f9f9',
+  border: '1px solid #ddd'
+}
 const errorStyle: React.CSSProperties = {
   background: '#ffe0e0',
   color: '#900',
@@ -335,5 +416,6 @@ const primaryBtn: React.CSSProperties = {
   borderRadius: 6,
   cursor: 'pointer',
   fontSize: 15,
-  fontWeight: 'bold'
+  fontWeight: 'bold',
+  marginTop: 15
 }
