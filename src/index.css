@@ -158,3 +158,30 @@ code {
     box-shadow: none !important;
   }
 }
+/* ============================================================
+   إعدادات الطباعة للجدول العام
+   ============================================================ */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  /* إخفاء العناصر التي لا تُطبع */
+  .no-print,
+  nav,
+  button {
+    display: none !important;
+  }
+
+  /* الجدول العام */
+  .print-area {
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+}

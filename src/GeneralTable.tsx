@@ -13,32 +13,24 @@ type Period = {
 
 const PERIODS_BY_DAY: { [day: number]: Period[] } = {
   0: [  // الأحد
-    { label: 'صباح 1', startSlot: 1,  endSlot: 10 },
-    { label: 'صباح 2', startSlot: 11, endSlot: 20 },
-    { label: 'مساء 1', startSlot: 21, endSlot: 28 },
-    { label: 'مساء 2', startSlot: 29, endSlot: 36 }
+    { label: 'صباحًا', startSlot: 1,  endSlot: 20 },
+    { label: 'مساءً',  startSlot: 21, endSlot: 36 }
   ],
   1: [  // الاثنين
-    { label: 'صباح 1', startSlot: 1,  endSlot: 10 },
-    { label: 'صباح 2', startSlot: 11, endSlot: 20 },
-    { label: 'مساء 1', startSlot: 21, endSlot: 28 },
-    { label: 'مساء 2', startSlot: 29, endSlot: 36 }
+    { label: 'صباحًا', startSlot: 1,  endSlot: 20 },
+    { label: 'مساءً',  startSlot: 21, endSlot: 36 }
   ],
   2: [  // الثلاثاء
-    { label: 'صباح',   startSlot: 1,  endSlot: 18 },
-    { label: 'مساء',   startSlot: 19, endSlot: 36 }
+    { label: 'صباحًا', startSlot: 1,  endSlot: 18 },
+    { label: 'مساءً',  startSlot: 19, endSlot: 36 }
   ],
   3: [  // الأربعاء
-    { label: 'صباح 1', startSlot: 1,  endSlot: 10 },
-    { label: 'صباح 2', startSlot: 11, endSlot: 20 },
-    { label: 'مساء 1', startSlot: 21, endSlot: 28 },
-    { label: 'مساء 2', startSlot: 29, endSlot: 36 }
+    { label: 'صباحًا', startSlot: 1,  endSlot: 20 },
+    { label: 'مساءً',  startSlot: 21, endSlot: 36 }
   ],
   4: [  // الخميس
-    { label: 'صباح 1', startSlot: 1,  endSlot: 10 },
-    { label: 'صباح 2', startSlot: 11, endSlot: 20 },
-    { label: 'مساء 1', startSlot: 21, endSlot: 28 },
-    { label: 'مساء 2', startSlot: 29, endSlot: 36 }
+    { label: 'صباحًا', startSlot: 1,  endSlot: 20 },
+    { label: 'مساءً',  startSlot: 21, endSlot: 36 }
   ]
 }
 
@@ -133,10 +125,28 @@ export function GeneralTable() {
       .sort((a, b) => a.start_slot - b.start_slot)
   }
 
-  if (loading) return <p style={{ padding: 20 }}>جاري التحميل...</p>
+    if (loading) return <p style={{ padding: 20 }}>جاري التحميل...</p>
 
   return (
     <div style={{ padding: 20, direction: 'rtl', fontFamily: 'Arial', background: '#f5f5f5' }}>
+      {/* زر الطباعة (لا يُطبع) */}
+      <div className="no-print" style={{ marginBottom: 15, textAlign: 'center' }}>
+        <button
+          onClick={() => window.print()}
+          style={{
+            padding: '10px 24px',
+            background: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: 6,
+            fontSize: 16,
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          🖨️ طباعة الجدول العام
+        </button>
+      </div>
       <div className="print-area" style={{ background: 'white', padding: 15, border: '1px solid #ddd' }}>
                 {/* الرأس الرسمي */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 11, lineHeight: 1.7 }}>
@@ -168,38 +178,76 @@ export function GeneralTable() {
           </div>
         </div>
 
-        {/* الإحصائيات */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, marginBottom: 10 }}>
-          <thead>
+                {/* الإحصائيات - الصف الأول */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, marginBottom: 4 }}>
+          <tbody>
             <tr>
               <th style={statHeaderStyle}>الحجرات</th>
-              <th style={statValueStyle}>{settings?.used_rooms ?? 0} مستعملة</th>
-              <th style={statValueStyle}>{settings?.empty_rooms ?? 0} فارغة</th>
-              <th style={statHeaderStyle}>المناصب</th>
-              <th style={statValueStyle}>{settings?.teaching_positions ?? 0} تدريس</th>
-              <th style={statValueStyle}>{settings?.other_positions ?? 0} أخرى</th>
-              <th style={statValueStyle}>{settings?.vacant_positions ?? 0} شاغرة</th>
+              {(settings?.used_rooms ?? 0) > 0 && (
+                <td style={statValueStyle}>مستعملة: {settings.used_rooms}</td>
+              )}
+              {(settings?.unused_rooms ?? 0) > 0 && (
+                <td style={statValueStyle}>غير مستعملة: {settings.unused_rooms}</td>
+              )}
+
+              <th style={statHeaderStyle}>المناصب المفتوحة</th>
+              {(settings?.position_director ?? 0) > 0 && (
+                <td style={statValueStyle}>مدر: {settings.position_director}</td>
+              )}
+              {(settings?.position_nazir ?? 0) > 0 && (
+                <td style={statValueStyle}>ناظر: {settings.position_nazir}</td>
+              )}
+              {(settings?.position_support ?? 0) > 0 && (
+                <td style={statValueStyle}>م م د ت: {settings.position_support}</td>
+              )}
+              {(settings?.position_other ?? 0) > 0 && (
+                <td style={statValueStyle}>منصب آخر: {settings.position_other}</td>
+              )}
+              {(settings?.position_arabic_teacher ?? 0) > 0 && (
+                <td style={statValueStyle}>أس عر: {settings.position_arabic_teacher}</td>
+              )}
+              {(settings?.position_french_teacher ?? 0) > 0 && (
+                <td style={statValueStyle}>أس فر: {settings.position_french_teacher}</td>
+              )}
+              {(settings?.position_english_teacher ?? 0) > 0 && (
+                <td style={statValueStyle}>أس إن: {settings.position_english_teacher}</td>
+              )}
+              {(settings?.position_pe_teacher ?? 0) > 0 && (
+                <td style={statValueStyle}>أس ت ب: {settings.position_pe_teacher}</td>
+              )}
             </tr>
+          </tbody>
+        </table>
+
+        {/* الإحصائيات - الصف الثاني */}
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, marginBottom: 10 }}>
+          <tbody>
             <tr>
               <th style={statHeaderStyle}>التلاميذ</th>
-              <th style={statValueStyle}>ذكور: {allClassesData.reduce((s, c) => s + (c.male_count || 0), 0)}</th>
-              <th style={statValueStyle}>إناث: {allClassesData.reduce((s, c) => s + (c.female_count || 0), 0)}</th>
-              <th style={statHeaderStyle}>الأقسام</th>
-              <th style={statValueStyle} colSpan={3}>{allClassesData.length} قسم</th>
+              <td style={statValueStyle}>
+                ذكور: {allClassesData.reduce((s, c) => s + (c.male_count || 0), 0)}
+              </td>
+              <td style={statValueStyle}>
+                إناث: {allClassesData.reduce((s, c) => s + (c.female_count || 0), 0)}
+              </td>
+              <td style={statValueStyle}>
+                المجموع: {allClassesData.reduce((s, c) => s + (c.student_count || 0), 0)}
+              </td>
+              <th style={statHeaderStyle}>الأفواج</th>
+              <td style={statValueStyle}>{allClassesData.length}</td>
             </tr>
-          </thead>
+          </tbody>
         </table>
 
         <h2 style={{ textAlign: 'center', fontSize: 16, margin: '15px 0' }}>
           الجدول العام لتوزيع الأساتذة
         </h2>
 
-        {/* الجدول الرئيسي */}
+                {/* الجدول الرئيسي */}
         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 9 }}>
           <thead>
             <tr>
-              <th style={{ ...thStyle, minWidth: 70 }}>اليوم</th>
-              <th style={{ ...thStyle, minWidth: 50 }}>الفترة</th>
+              <th style={{ ...thStyle, minWidth: 90 }}>اليوم</th>
               {classes.map(c => (
                 <th key={c.id} style={thStyle}>{c.name}</th>
               ))}
@@ -210,15 +258,12 @@ export function GeneralTable() {
               const periods = PERIODS_BY_DAY[dayIdx] || []
               return periods.map((period, pIdx) => (
                 <tr key={`${dayIdx}-${pIdx}`}>
-                  {pIdx === 0 && (
-                    <td
-                      rowSpan={periods.length}
-                      style={{ ...dayCellStyle, fontWeight: 'bold' }}
-                    >
-                      {dayName}
-                    </td>
-                  )}
-                  <td style={periodCellStyle}>{period.label}</td>
+                     <td style={{ ...dayCellStyle, fontWeight: 'bold', whiteSpace: 'nowrap', padding: '2px 4px', minWidth: 32, width: 32 }}>
+                     <div style={{ fontSize: 9 }}>{dayName}</div>
+                    <div style={{ fontSize: 7, fontWeight: 'normal', color: '#555' }}>
+                      {period.label}
+                    </div>
+                  </td>
                   {classes.map(c => {
                     const cellEntries = getEntriesInPeriod(c.id, dayIdx, period)
                     return (
@@ -228,7 +273,7 @@ export function GeneralTable() {
                         ) : (
                           cellEntries.map(entry => (
                             <div key={entry.id} style={entryBoxStyle}>
-                                                            <div style={{ fontWeight: 'bold', fontSize: 9 }}>
+                              <div style={{ fontWeight: 'bold', fontSize: 9 }}>
                                 <span style={{ direction: 'ltr', display: 'inline-block' }}>
                                   {slotToTime(entry.start_slot + entry.duration_slots)}-{slotToTime(entry.start_slot)}
                                 </span>
@@ -250,7 +295,23 @@ export function GeneralTable() {
               ))
             })}
           </tbody>
-        </table>
+         </table>
+
+                 {/* الإمضاءات */}
+        <div style={{ marginTop: 40, fontSize: 12, display: 'flex', justifyContent: 'space-between', pageBreakInside: 'avoid' }}>
+          {/* المدير - يمين */}
+          <div style={{ textAlign: 'center', minWidth: 220 }}>
+            <div style={{ fontWeight: 'bold', marginBottom: 60 }}>مدير المؤسسة</div>
+            <div>{settings?.director_name || '...................'}</div>
+          </div>
+
+          {/* المفتشية - يسار */}
+          <div style={{ textAlign: 'center', minWidth: 220 }}>
+            <div style={{ fontWeight: 'bold', marginBottom: 60 }}>المفتشية</div>
+            <div>{settings?.inspectorate || '...................'}</div>
+          </div>
+        </div>
+
       </div>
     </div>
   )
@@ -273,16 +334,6 @@ const dayCellStyle: React.CSSProperties = {
   textAlign: 'center',
   verticalAlign: 'middle',
   fontSize: 10
-}
-
-const periodCellStyle: React.CSSProperties = {
-  border: '1px solid #000',
-  padding: 2,
-  background: '#f9f9f9',
-  textAlign: 'center',
-  fontSize: 9,
-  fontWeight: 'bold',
-  whiteSpace: 'nowrap'
 }
 
 const cellStyle: React.CSSProperties = {
