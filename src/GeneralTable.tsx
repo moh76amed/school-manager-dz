@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 
 const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس']
@@ -69,7 +69,7 @@ type Entry = {
   duration_slots: number
   teacher_id: string
   teachers: { first_name: string; last_name: string } | null
-  subjects: { code: string | null; name: string } | null
+    subjects: { code: string | null; name: string; color: string } | null
 }
 
 export function GeneralTable() {
@@ -86,7 +86,7 @@ export function GeneralTable() {
         .select('id, name, level_id, levels(name, order_index)')
       const { data: e } = await supabase
         .from('timetable_entries')
-        .select('id, class_id, day_of_week, start_slot, duration_slots, teacher_id, teachers(first_name, last_name), subjects(code, name)')
+                .select('id, class_id, day_of_week, start_slot, duration_slots, teacher_id, teachers(first_name, last_name), subjects(code, name, color)')
       const { data: s } = await supabase
         .from('settings')
         .select('*')
@@ -254,61 +254,79 @@ export function GeneralTable() {
             </tr>
           </thead>
           <tbody>
-            {DAYS.map((dayName, dayIdx) => {
+                        {DAYS.map((dayName, dayIdx) => {
               const periods = PERIODS_BY_DAY[dayIdx] || []
-              return periods.map((period, pIdx) => (
-                <tr key={`${dayIdx}-${pIdx}`}>
-                     <td style={{ ...dayCellStyle, fontWeight: 'bold', whiteSpace: 'nowrap', padding: '2px 4px', minWidth: 32, width: 32 }}>
-                     <div style={{ fontSize: 9 }}>{dayName}</div>
-                    <div style={{ fontSize: 7, fontWeight: 'normal', color: '#555' }}>
-                      {period.label}
-                    </div>
-                  </td>
-                  {classes.map(c => {
-                    const cellEntries = getEntriesInPeriod(c.id, dayIdx, period)
-                    return (
-                      <td key={c.id} style={cellStyle}>
-                        {cellEntries.length === 0 ? (
-                          <span style={{ color: '#ccc' }}>—</span>
-                        ) : (
-                          cellEntries.map(entry => (
-                            <div key={entry.id} style={entryBoxStyle}>
-                              <div style={{ fontWeight: 'bold', fontSize: 9 }}>
-                                <span style={{ direction: 'ltr', display: 'inline-block' }}>
-                                  {slotToTime(entry.start_slot + entry.duration_slots)}-{slotToTime(entry.start_slot)}
-                                </span>
-                                {' '}
-                                <span style={{ color: '#1e40af' }}>
-                                  {getSubjectCode(entry.subjects?.code || null, entry.subjects?.name || null)}
-                                </span>
-                              </div>
-                              <div style={{ fontSize: 8, color: '#555' }}>
-                                {entry.teachers?.first_name} {entry.teachers?.last_name}
-                              </div>
-                            </div>
-                          ))
-                        )}
+              const breakAfter = dayIdx === 1 || dayIdx === 3
+              return (
+                <React.Fragment key={dayIdx}>
+                  {periods.map((period, pIdx) => (
+                    <tr key={`${dayIdx}-${pIdx}`}>
+                      <td style={{ ...dayCellStyle, fontWeight: 'bold', whiteSpace: 'nowrap', padding: '1px 2px', minWidth: 32, width: 32 }}>
+                        <div style={{ fontSize: 9 }}>{dayName}</div>
+                        <div style={{ fontSize: 7, fontWeight: 'normal', color: '#555' }}>
+                          {period.label}
+                        </div>
                       </td>
-                    )
-                  })}
-                </tr>
-              ))
+                      {classes.map(c => {
+                        const cellEntries = getEntriesInPeriod(c.id, dayIdx, period)
+                        return (
+                          <td key={c.id} style={cellStyle}>
+                            {cellEntries.length === 0 ? (
+                              <span style={{ color: '#ccc' }}>—</span>
+                            ) : (
+                              cellEntries.map(entry => (
+                                <div key={entry.id} style={entryBoxStyle}>
+                                  <div style={{
+                                    fontWeight: 'bold',
+                                    fontSize: 9,
+                                    background: entry.subjects?.color || 'transparent',
+                                    color: 'white',
+                                    padding: '2px 3px',
+                                    borderRadius: 3,
+                                    marginBottom: 2
+                                  }}>
+                                    <span style={{ direction: 'ltr', display: 'inline-block' }}>
+                                      {slotToTime(entry.start_slot + entry.duration_slots)}-{slotToTime(entry.start_slot)}
+                                    </span>
+                                    {' '}
+                                    {getSubjectCode(entry.subjects?.code || null, entry.subjects?.name || null)}
+                                  </div>
+                                  <div style={{ fontSize: 8, color: '#555' }}>
+                                    {entry.teachers?.first_name} {entry.teachers?.last_name}
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                  {breakAfter && (
+                    <tr style={{ pageBreakAfter: 'always' }}>
+                      <td colSpan={classes.length + 1} style={{ border: 'none', height: 0, padding: 0 }}></td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              )
             })}
           </tbody>
          </table>
 
-                 {/* الإمضاءات */}
-        <div style={{ marginTop: 40, fontSize: 12, display: 'flex', justifyContent: 'space-between', pageBreakInside: 'avoid' }}>
+              {/* الإمضاءات */}
+        <div style={{ marginTop: 20, fontSize: 12, display: 'flex', justifyContent: 'space-between', pageBreakInside: 'avoid' }}>
           {/* المدير - يمين */}
-          <div style={{ textAlign: 'center', minWidth: 220 }}>
-            <div style={{ fontWeight: 'bold', marginBottom: 60 }}>مدير المؤسسة</div>
-            <div>{settings?.director_name || '...................'}</div>
+          <div style={{ textAlign: 'center', minWidth: 250 }}>
+            <div style={{ fontWeight: 'bold' }}>
+              مدير المؤسسة: {settings?.director_name || ''}
+            </div>
           </div>
 
           {/* المفتشية - يسار */}
-          <div style={{ textAlign: 'center', minWidth: 220 }}>
-            <div style={{ fontWeight: 'bold', marginBottom: 60 }}>المفتشية</div>
-            <div>{settings?.inspectorate || '...................'}</div>
+          <div style={{ textAlign: 'center', minWidth: 250 }}>
+            <div style={{ fontWeight: 'bold' }}>
+              {settings?.inspectorate || ''}
+            </div>
           </div>
         </div>
 
