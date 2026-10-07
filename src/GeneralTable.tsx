@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import ExcelJS from 'exceljs'
 import { supabase } from './supabaseClient'
 
 const DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس']
@@ -125,12 +126,358 @@ export function GeneralTable() {
       .sort((a, b) => a.start_slot - b.start_slot)
   }
 
-    if (loading) return <p style={{ padding: 20 }}>جاري التحميل...</p>
+    // تصدير الجدول إلى Excel
+  async function exportToExcel() {
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('الجدول العام', {
+      views: [{ rightToLeft: true }],
+            pageSetup: {
+        paperSize: 9,                    // A4
+        orientation: 'landscape',        // أفقي
+        fitToPage: true,
+        fitToWidth: 1,                   // ✅ صفحة واحدة بالعرض
+        fitToHeight: 2,                  // ✅ صفحتان بالطول (المفتاح!)
+        margins: {
+          left: 0.3,
+          right: 0.3,
+          top: 0.5,                      // ✅ زيادة الهامش العلوي
+          bottom: 0.5,                   // ✅ زيادة الهامش السفلي
+          header: 0.5,
+          footer: 0.5
+        },
+        horizontalCentered: true,        // ✅ توسيط أفقي
+        verticalCentered: false
+      }
+    })
 
-  return (
+    // عرض الأعمدة
+    worksheet.getColumn(1).width = 7
+    classes.forEach((_, idx) => {
+      worksheet.getColumn(idx + 2).width = 18
+    })
+
+    const totalCols = classes.length + 1
+   
+    // =========================================================
+    // الترويسة الرسمية (3 أقسام: يمين - وسط - يسار)
+    // =========================================================
+    let currentRow = 1
+
+    const third1 = Math.max(1, Math.floor(totalCols / 3))
+    const third2 = Math.max(third1 + 1, Math.floor((totalCols * 2) / 3))
+
+    // ---------- السطر 1: المديرية (يمين) | الجمهورية (وسط) | السنة (يسار) ----------
+    worksheet.mergeCells(currentRow, 1, currentRow, third1)
+    const dirCell1 = worksheet.getCell(currentRow, 1)
+    dirCell1.value = settings?.direction || 'مديرية التربية لولاية ...'
+    dirCell1.font = { bold: true, size: 14 } // ✅ حجم 14
+    dirCell1.alignment = { horizontal: 'center', vertical: 'middle' }
+
+    worksheet.mergeCells(currentRow, third1 + 1, currentRow, third2)
+    const repCell = worksheet.getCell(currentRow, third1 + 1)
+    repCell.value = 'الجمهورية الجزائرية الديمقراطية الشعبية'
+    repCell.font = { bold: true, size: 14 } // ✅ حجم 14
+    repCell.alignment = { horizontal: 'center', vertical: 'middle' }
+
+    worksheet.mergeCells(currentRow, third2 + 1, currentRow, totalCols)
+    const yearCell1 = worksheet.getCell(currentRow, third2 + 1)
+    yearCell1.value = `السنة الدراسية: ${settings?.academic_year || '...'}`
+    yearCell1.font = { bold: true, size: 14 } // ✅ حجم 14
+    yearCell1.alignment = { horizontal: 'center', vertical: 'middle' }
+
+    currentRow++
+
+    // ---------- السطر 2: المفتشية | وزارة التربية | الدائرة/البلدية ----------
+    worksheet.mergeCells(currentRow, 1, currentRow, third1)
+    const inspCell = worksheet.getCell(currentRow, 1)
+    inspCell.value = settings?.inspectorate || 'المفتشية'
+    inspCell.font = { size: 14 } // ✅ حجم 14
+    inspCell.alignment = { horizontal: 'center', vertical: 'middle' }
+
+    worksheet.mergeCells(currentRow, third1 + 1, currentRow, third2)
+    const minCell = worksheet.getCell(currentRow, third1 + 1)
+    minCell.value = 'وزارة التربية الوطنية'
+    minCell.font = { bold: true, size: 14 } // ✅ حجم 14
+    minCell.alignment = { horizontal: 'center', vertical: 'middle' }
+
+    worksheet.mergeCells(currentRow, third2 + 1, currentRow, totalCols)
+    const dairaCell1 = worksheet.getCell(currentRow, third2 + 1)
+    dairaCell1.value = `الدائرة: ${settings?.daira || '...'} | البلدية: ${settings?.commune || '...'}`
+    dairaCell1.font = { size: 14 } // ✅ حجم 14
+    dairaCell1.alignment = { horizontal: 'center', vertical: 'middle' }
+
+    currentRow++
+
+    // ---------- السطر 3: المدرسة | (فارغ) | المدير ----------
+    worksheet.mergeCells(currentRow, 1, currentRow, third1)
+    const schoolCell = worksheet.getCell(currentRow, 1)
+    schoolCell.value = settings?.school_name || 'اسم المدرسة'
+    schoolCell.font = { bold: true, size: 14 } // ✅ حجم 14
+    schoolCell.alignment = { horizontal: 'center', vertical: 'middle' }
+
+    worksheet.mergeCells(currentRow, third1 + 1, currentRow, third2)
+
+    worksheet.mergeCells(currentRow, third2 + 1, currentRow, totalCols)
+    const dirNameCell = worksheet.getCell(currentRow, third2 + 1)
+    dirNameCell.value = `المدير: ${settings?.director_name || '...'}`
+    dirNameCell.font = { size: 14 } // ✅ حجم 14
+    dirNameCell.alignment = { horizontal: 'center', vertical: 'middle' }
+
+    currentRow++
+
+    // ---------- السطر 4: فارغ ----------
+    currentRow++
+
+    // =========================================================
+    // جدول الإحصائيات - كل معلومة في خلية مستقلة
+    // =========================================================
+    const styleStatCell = (
+      cell: ExcelJS.Cell,
+      value: string | number,
+      isHeader: boolean = false
+    ) => {
+      cell.value = value
+      if (isHeader) {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 } // ✅ حجم 11
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }
+      } else {
+        cell.font = { bold: true, size: 11 } // ✅ حجم 11
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF9F9F9' } }
+      }
+      cell.alignment = { horizontal: 'center', vertical: 'middle' }
+      cell.border = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
+      }
+    }
+
+    // ---------- السطر 5: الحجرات والمناصب المفتوحة ----------
+    let col = 2
+
+    styleStatCell(worksheet.getCell(currentRow, col), 'الحجرات', true)
+    col++
+
+    if ((settings?.used_rooms ?? 0) > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `مستعملة: ${settings.used_rooms}`)
+      col++
+    }
+    if ((settings?.unused_rooms ?? 0) > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `غير مستعملة: ${settings.unused_rooms}`)
+      col++
+    }
+
+    styleStatCell(worksheet.getCell(currentRow, col), 'المناصب المفتوحة', true)
+    col++
+
+    if ((settings?.position_director ?? 0) > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `مدر: ${settings.position_director}`)
+      col++
+    }
+    if ((settings?.position_nazir ?? 0) > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `ناظر: ${settings.position_nazir}`)
+      col++
+    }
+    if ((settings?.position_support ?? 0) > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `م م د ت: ${settings.position_support}`)
+      col++
+    }
+    if ((settings?.position_other ?? 0) > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `منصب آخر: ${settings.position_other}`)
+      col++
+    }
+    if ((settings?.position_arabic_teacher ?? 0) > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `أس عر: ${settings.position_arabic_teacher}`)
+      col++
+    }
+    if ((settings?.position_french_teacher ?? 0) > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `أس فر: ${settings.position_french_teacher}`)
+      col++
+    }
+    if ((settings?.position_english_teacher ?? 0) > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `أس إن: ${settings.position_english_teacher}`)
+      col++
+    }
+    if ((settings?.position_pe_teacher ?? 0) > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `أس ت ب: ${settings.position_pe_teacher}`)
+      col++
+    }
+
+    currentRow++
+
+    // ---------- السطر 6: التلاميذ والأفواج ----------
+    col = 2
+    const totalMale = allClassesData.reduce((s, c) => s + (c.male_count || 0), 0)
+    const totalFemale = allClassesData.reduce((s, c) => s + (c.female_count || 0), 0)
+    const totalStudents = allClassesData.reduce((s, c) => s + (c.student_count || 0), 0)
+
+    styleStatCell(worksheet.getCell(currentRow, col), 'التلاميذ', true)
+    col++
+
+    if (totalMale > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `ذكور: ${totalMale}`)
+      col++
+    }
+    if (totalFemale > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `إناث: ${totalFemale}`)
+      col++
+    }
+    if (totalStudents > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `المجموع: ${totalStudents}`)
+      col++
+    }
+
+    styleStatCell(worksheet.getCell(currentRow, col), 'الأفواج', true)
+    col++
+    if (allClassesData.length > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), allClassesData.length)
+      col++
+    }
+
+    currentRow++
+
+    // ---------- السطر 7: فارغ (جديد) ----------
+    currentRow++
+
+    // =========================================================
+    // عنوان الجدول الرئيسي (السطر 8)
+    // =========================================================
+    worksheet.mergeCells(currentRow, 1, currentRow, totalCols)
+    const titleCell = worksheet.getCell(currentRow, 1)
+    titleCell.value = 'الجدول العام لتوزيع الأساتذة'
+    titleCell.font = { bold: true, size: 16 } // ✅ حجم 16
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+
+    currentRow++
+
+    // ---------- السطر 9: فارغ ----------
+    currentRow++
+
+    // =========================================================
+    // رأس الجدول الرئيسي (السطر 10)
+    // =========================================================
+    const headerCells = ['اليوم', ...classes.map(c => c.name)]
+    headerCells.forEach((text, idx) => {
+      const cell = worksheet.getCell(currentRow, idx + 1)
+      cell.value = text
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } }
+      cell.border = {
+        top: { style: 'thin' }, left: { style: 'thin' },
+        bottom: { style: 'thin' }, right: { style: 'thin' }
+      }
+    })
+    worksheet.getRow(currentRow).height = 30
+
+    currentRow++
+
+    // بيانات الجدول
+    DAYS.forEach((dayName, dayIdx) => {
+      const periods = PERIODS_BY_DAY[dayIdx] || []
+      periods.forEach((period) => {
+        const dayCell = worksheet.getCell(currentRow, 1)
+        dayCell.value = `${dayName} ${period.label}`
+        dayCell.font = { bold: true, size: 11 }
+        dayCell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+        dayCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF0F0F0' } }
+        dayCell.border = {
+          top: { style: 'thin' }, left: { style: 'thin' },
+          bottom: { style: 'thin' }, right: { style: 'thin' }
+        }
+
+        classes.forEach((c, cIdx) => {
+          const cell = worksheet.getCell(currentRow, cIdx + 2)
+          const cellEntries = getEntriesInPeriod(c.id, dayIdx, period)
+
+          if (cellEntries.length === 0) {
+            cell.value = '—'
+            cell.font = { size: 11 }
+            cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+          } else {
+            const text = cellEntries.map(entry => {
+              const time = `${slotToTime(entry.start_slot + entry.duration_slots)}-${slotToTime(entry.start_slot)}`
+              const subject = getSubjectCode(entry.subjects?.code || null, entry.subjects?.name || null)
+              const teacher = `${entry.teachers?.first_name || ''} ${entry.teachers?.last_name || ''}`
+              return `${time} ${subject}\n${teacher}`
+            }).join('\n\n')
+
+            cell.value = text
+            cell.font = { size: 11, bold: true, color: { argb: 'FFFFFFFF' } }
+
+            const firstEntry = cellEntries[0]
+            const color = firstEntry.subjects?.color || '#CCCCCC'
+            const argb = 'FF' + color.replace('#', '').toUpperCase()
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb } }
+
+            cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+          }
+
+          cell.border = {
+            top: { style: 'thin' }, left: { style: 'thin' },
+            bottom: { style: 'thin' }, right: { style: 'thin' }
+          }
+        })
+
+        worksheet.getRow(currentRow).height = 77
+        currentRow++
+      })
+
+      // ✅ إضافة فاصل صفحات بعد يوم الاثنين (dayIdx === 1) ليتم التقسيم إلى صفحتين
+      // يمكنك تغيير الرقم (1 = الاثنين، 2 = الثلاثاء، 3 = الأربعاء) حسب رغبتك
+      if (dayIdx === 1) {
+        worksheet.getRow(currentRow).addPageBreak()
+      }
+    })
+
+    // =========================================================
+    // سطر الإمضاءات (بدون دمج - كل خلية مستقلة)
+    // =========================================================
+    const signRow = worksheet.getRow(currentRow)
+    signRow.height = 27
+
+    // المدير - في العمود B - محاذاة إلى اليمين
+    const directorCell = signRow.getCell(2)
+    directorCell.value = `مدير المؤسسة: ${settings?.director_name || ''}`
+    directorCell.font = { size: 11, bold: true }
+    directorCell.alignment = { vertical: 'middle', horizontal: 'right' }
+
+    // المفتشية - في العمود L - محاذاة إلى اليسار
+    const inspectorCell = signRow.getCell(12)
+    inspectorCell.value = `المفتشية: ${settings?.inspectorate || ''}`
+    inspectorCell.font = { size: 11, bold: true }
+    inspectorCell.alignment = { vertical: 'middle', horizontal: 'left' }
+
+    // =========================================================
+    // ✅ ضبط ارتفاع الأسطر التسعة الأولى إلى 20
+    // =========================================================
+    for (let r = 1; r <= 9; r++) {
+      worksheet.getRow(r).height = 20
+    }
+
+        // ✅ تحديد منطقة الطباعة بشكل صريح (لا تُضمّن الأعمدة الزائدة)
+    // نحسب آخر عمود استُخدم فعلياً في الصف 5 (الإحصائيات)
+    const maxPrintCol = Math.max(totalCols, 12) // ✅ نضمن أن العمود L (12) مُدرج للإمضاءات
+    const lastColLetter = String.fromCharCode(64 + maxPrintCol)
+    worksheet.pageSetup.printArea = `A1:${lastColLetter}${currentRow}`
+
+     // تنزيل الملف
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `الجدول_العام_${settings?.academic_year?.replace('/', '-') || ''}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  if (loading) return <p style={{ padding: 20 }}>جاري التحميل...</p>
+   return (
     <div style={{ padding: 20, direction: 'rtl', fontFamily: 'Arial', background: '#f5f5f5' }}>
       {/* زر الطباعة (لا يُطبع) */}
-      <div className="no-print" style={{ marginBottom: 15, textAlign: 'center' }}>
+           <div className="no-print" style={{ marginBottom: 15, textAlign: 'center', display: 'flex', gap: 10, justifyContent: 'center' }}>
         <button
           onClick={() => window.print()}
           style={{
@@ -145,6 +492,22 @@ export function GeneralTable() {
           }}
         >
           🖨️ طباعة الجدول العام
+        </button>
+
+        <button
+          onClick={exportToExcel}
+          style={{
+            padding: '10px 24px',
+            background: '#16a34a',
+            color: 'white',
+            border: 'none',
+            borderRadius: 6,
+            fontSize: 16,
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          📊 تصدير Excel
         </button>
       </div>
       <div className="print-area" style={{ background: 'white', padding: 15, border: '1px solid #ddd' }}>
