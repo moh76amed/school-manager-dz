@@ -38,7 +38,7 @@ const PERIODS_BY_DAY: { [day: number]: Period[] } = {
 // ترميز المادة بالعربية
 function getSubjectCode(code: string | null, name: string | null): string {
   const map: { [key: string]: string } = {
-    ARB: 'عر', FR: 'فر', EN: 'إن', MATH: 'ري',
+    ARB: 'عر', FR: 'فر', EN: 'إنج', MATH: 'ري',
     ISL: 'تإ', CIV: 'تم', HG: 'تج', SVT: 'عل',
     ART: 'تف', SPO: 'تب', QUR: 'قر', SOR: 'سر',
     DES: 'رس', MEM: 'مح'
@@ -269,8 +269,8 @@ export function GeneralTable() {
     styleStatCell(worksheet.getCell(currentRow, col), 'المناصب المفتوحة', true)
     col++
 
-    if ((settings?.position_director ?? 0) > 0) {
-      styleStatCell(worksheet.getCell(currentRow, col), `مدر: ${settings.position_director}`)
+        if ((settings?.position_director ?? 0) > 0) {
+      styleStatCell(worksheet.getCell(currentRow, col), `مدير: ${settings.position_director}`)
       col++
     }
     if ((settings?.position_nazir ?? 0) > 0) {
@@ -286,19 +286,19 @@ export function GeneralTable() {
       col++
     }
     if ((settings?.position_arabic_teacher ?? 0) > 0) {
-      styleStatCell(worksheet.getCell(currentRow, col), `أس عر: ${settings.position_arabic_teacher}`)
+      styleStatCell(worksheet.getCell(currentRow, col), `العربية: ${settings.position_arabic_teacher}`)
       col++
     }
     if ((settings?.position_french_teacher ?? 0) > 0) {
-      styleStatCell(worksheet.getCell(currentRow, col), `أس فر: ${settings.position_french_teacher}`)
+      styleStatCell(worksheet.getCell(currentRow, col), `الفرنسية: ${settings.position_french_teacher}`)
       col++
     }
     if ((settings?.position_english_teacher ?? 0) > 0) {
-      styleStatCell(worksheet.getCell(currentRow, col), `أس إن: ${settings.position_english_teacher}`)
+      styleStatCell(worksheet.getCell(currentRow, col), `الإنجليزية: ${settings.position_english_teacher}`)
       col++
     }
     if ((settings?.position_pe_teacher ?? 0) > 0) {
-      styleStatCell(worksheet.getCell(currentRow, col), `أس ت ب: ${settings.position_pe_teacher}`)
+      styleStatCell(worksheet.getCell(currentRow, col), `التربية البدنية: ${settings.position_pe_teacher}`)
       col++
     }
 
@@ -554,8 +554,8 @@ export function GeneralTable() {
               )}
 
               <th style={statHeaderStyle}>المناصب المفتوحة</th>
-              {(settings?.position_director ?? 0) > 0 && (
-                <td style={statValueStyle}>مدر: {settings.position_director}</td>
+                            {(settings?.position_director ?? 0) > 0 && (
+                <td style={statValueStyle}>مدير: {settings.position_director}</td>
               )}
               {(settings?.position_nazir ?? 0) > 0 && (
                 <td style={statValueStyle}>ناظر: {settings.position_nazir}</td>
@@ -567,16 +567,16 @@ export function GeneralTable() {
                 <td style={statValueStyle}>منصب آخر: {settings.position_other}</td>
               )}
               {(settings?.position_arabic_teacher ?? 0) > 0 && (
-                <td style={statValueStyle}>أس عر: {settings.position_arabic_teacher}</td>
+                <td style={statValueStyle}>العربية: {settings.position_arabic_teacher}</td>
               )}
               {(settings?.position_french_teacher ?? 0) > 0 && (
-                <td style={statValueStyle}>أس فر: {settings.position_french_teacher}</td>
+                <td style={statValueStyle}>الفرنسية: {settings.position_french_teacher}</td>
               )}
               {(settings?.position_english_teacher ?? 0) > 0 && (
-                <td style={statValueStyle}>أس إن: {settings.position_english_teacher}</td>
+                <td style={statValueStyle}>الإنجليزية: {settings.position_english_teacher}</td>
               )}
               {(settings?.position_pe_teacher ?? 0) > 0 && (
-                <td style={statValueStyle}>أس ت ب: {settings.position_pe_teacher}</td>
+                <td style={statValueStyle}>التربية البدنية: {settings.position_pe_teacher}</td>
               )}
             </tr>
           </tbody>

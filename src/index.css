@@ -166,6 +166,12 @@ code {
     size: A4 landscape;
     margin: 8mm;
   }
+  
+  /* ✅ إجبار المتصفح على طباعة الألوان والخلفيات */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    }
 
   body {
     background: white !important;
