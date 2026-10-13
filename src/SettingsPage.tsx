@@ -35,6 +35,7 @@ type Settings = {
   position_french_teacher: number | null
   position_english_teacher: number | null
   position_pe_teacher: number | null
+  general_table_title: string | null
 }
 
 export function SettingsPage() {
@@ -206,6 +207,17 @@ export function SettingsPage() {
             type="text"
             value={settings.school_name || ''}
             onChange={(e) => updateField('school_name', e.target.value)}
+            style={inputStyle}
+          />
+        </label>
+
+                {/* عنوان الجدول العام */}
+        <label style={labelStyle}>
+          عنوان الجدول العام
+          <input
+            type="text"
+            value={settings.general_table_title || ''}
+            onChange={(e) => updateField('general_table_title', e.target.value)}
             style={inputStyle}
           />
         </label>
