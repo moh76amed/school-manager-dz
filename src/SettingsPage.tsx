@@ -93,8 +93,10 @@ export function SettingsPage() {
         position_arabic_teacher: settings.position_arabic_teacher,
         position_french_teacher: settings.position_french_teacher,
         position_english_teacher: settings.position_english_teacher,
-        position_pe_teacher: settings.position_pe_teacher
-      })
+        position_pe_teacher: settings.position_pe_teacher,
+        general_table_title: settings.general_table_title
+        })
+
       .eq('id', 1)
 
     setSaving(false)
