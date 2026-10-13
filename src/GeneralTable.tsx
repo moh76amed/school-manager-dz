@@ -343,7 +343,7 @@ export function GeneralTable() {
     // =========================================================
     worksheet.mergeCells(currentRow, 1, currentRow, totalCols)
     const titleCell = worksheet.getCell(currentRow, 1)
-    titleCell.value = 'الجدول العام لتوزيع الأساتذة'
+    titleCell.value = 'التنظيم البيداغوجي'
     titleCell.font = { bold: true, size: 16 } // ✅ حجم 16
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
 
@@ -603,7 +603,7 @@ export function GeneralTable() {
         </table>
 
         <h2 style={{ textAlign: 'center', fontSize: 16, margin: '15px 0' }}>
-          الجدول العام لتوزيع الأساتذة
+          التنظيم البيداغوجي
         </h2>
 
                 {/* الجدول الرئيسي */}
